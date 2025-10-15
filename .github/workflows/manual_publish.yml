@@ -29,7 +29,11 @@ jobs:
           # requirements.txt should include test/runtime dependencies (pytest is listed there)
 
       - name: Build courses site
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
+          # Ensure the repo root is on PYTHONPATH so scripts can `import canvas_viewer`
+          python -c "import sys; print('PYTHONPATH=', sys.path)"
           python scripts/export_courses.py --courses-dir courses --output-dir public
 
       - name: Ensure gh-pages branch exists
