@@ -34,3 +34,4 @@ courses/**
 !courses/minimal-course-export/
 !courses/minimal-course-export/**
 
+public/

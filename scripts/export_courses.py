@@ -17,6 +17,7 @@ from pathlib import Path
 
 from canvas_viewer.parser import CanvasExport
 from lxml import html as lh
+import jinja2
 
 
 def unzip_archives(courses_dir: Path):
@@ -57,44 +58,125 @@ def build_course(export_path: Path, out_path: Path):
             print(f"Copying {src} -> {dst}")
             shutil.copytree(src, dst)
 
-    # build a simple index.html for the course
+    # gather pages/files/modules for rendering the richer template below
     pages = exp.list_pages()
     files = exp.get_files()
     modules = exp.get_modules()
 
-    idx_lines = [
-        '<!doctype html>',
-        '<html><head><meta charset="utf-8"><title>%s</title></head><body>' % (name,),
-        f'<h1>{name}</h1>',
-        '<h2>Pages</h2>',
-        '<ul>'
-    ]
-    for p in pages:
-        href = p.get('href')
-        # link relative to course root
-        idx_lines.append(f'<li><a href="./{href}">{p.get("title") or href}</a></li>')
-    idx_lines.append('</ul>')
+    # Render a richer static index using a small Jinja2 template that mimics
+    # the interactive viewer but uses local paths for static assets and pages.
+    try:
+        metadata = exp.get_course_metadata() or {}
+        assets = []
+        # combine pages and files for a simplified asset listing
+        for p in exp.list_pages():
+            assets.append({'title': p.get('title') or p.get('href'), 'href': p.get('href'), 'type': 'page'})
+        for f in exp.get_files():
+            assets.append({'title': f.get('title') or f.get('href'), 'href': f.get('href'), 'type': 'file'})
 
-    idx_lines.append('<h2>Files</h2><ul>')
-    for f in files:
-        href = f.get('href')
-        idx_lines.append(f'<li><a href="./{href}">{f.get("title")}</a> ({f.get("date") or "—"})</li>')
-    idx_lines.append('</ul>')
+        external_tools = exp.detect_external_tools() or []
+        has_external_tools = bool(external_tools)
 
-    if modules:
-        idx_lines.append('<h2>Modules</h2>')
-        for m in modules:
-            idx_lines.append(f'<h3>{m.get("title")}</h3><ul>')
-            for it in m.get('items'):
-                href = it.get('href') or '#'
-                idx_lines.append(f'<li><a href="./{href}">{it.get("title")}</a></li>')
-            idx_lines.append('</ul>')
+        modules = exp.get_modules() or []
 
-    idx_lines.append('<p><a href="../index.html">Back to courses index</a></p>')
-    idx_lines.append('</body></html>')
+        nav = {
+            'home': True,
+            'syllabus': bool(exp.get_syllabus()),
+            'announcements': False,
+            'modules': bool(modules),
+            'pages': bool(exp.list_pages()),
+            'files': bool(exp.get_files()),
+            'quizzes': False,
+            'discussions': False,
+            'people': False,
+        }
 
-    with open(course_out / 'index.html', 'w', encoding='utf-8') as fh:
-        fh.write('\n'.join(idx_lines))
+        tmpl = jinja2.Template(r"""<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ title }}</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="./_static/canvas_viewer.css" />
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="../index.html">Canvas Viewer</a>
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        {% if nav.home %}<li class="nav-item"><a class="nav-link" href="./index.html">Home</a></li>{% endif %}
+                        {% if nav.syllabus %}<li class="nav-item"><a class="nav-link" href="./course_settings/syllabus.html">Syllabus</a></li>{% endif %}
+                        {% if nav.modules %}<li class="nav-item"><a class="nav-link" href="./index.html#modules">Modules</a></li>{% endif %}
+                        {% if nav.pages %}<li class="nav-item"><a class="nav-link" href="./wiki_content/homepage.html">Pages</a></li>{% endif %}
+                        {% if nav.files %}<li class="nav-item"><a class="nav-link" href="./index.html#files">Files</a></li>{% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container">
+            <div class="row">
+                <section class="col-12">
+                    <div class="card mb-3">
+                        <div class="card-body d-flex">
+                            <div class="me-3">
+                                {% if metadata.image_href %}
+                                    <img src="./{{ metadata.image_href }}" alt="Course image" style="max-width:150px; height:auto;"/>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h2 class="h5">{{ metadata.title or title }}</h2>
+                                <p class="mb-1"><strong>Course code:</strong> {{ metadata.course_code or '—' }}</p>
+                                <p class="mb-1"><strong>Start:</strong> {{ metadata.start_at or '—' }} <strong>End:</strong> {{ metadata.conclude_at or '—' }}</p>
+                                <p class="mb-0"><strong>License:</strong> {{ metadata.license or '—' }} <strong>Storage:</strong> {{ metadata.storage_quota or '—' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">All Assets</div>
+                        {% if has_external_tools %}
+                            <div class="card-body">
+                                <div class="alert alert-warning mb-0">
+                                    <strong>Warning:</strong> This export references external tool integrations that may host course content outside the export. Detected: {{ external_tools | join(', ') }}
+                                </div>
+                            </div>
+                        {% endif %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0">
+                                <thead><tr><th>Name</th><th>Path</th></tr></thead>
+                                <tbody>
+                                    {% for a in assets %}
+                                        <tr>
+                                            <td>{{ a.title or a.href }}</td>
+                                            <td>
+                                                {% if a.type == 'page' %}
+                                                    <a href="./{{ a.href }}">{{ a.href }}</a>
+                                                {% else %}
+                                                    <a href="./{{ a.href }}">{{ a.href }}</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>""")
+
+        rendered = tmpl.render(title=name, metadata=metadata, assets=assets, external_tools=external_tools, has_external_tools=has_external_tools, nav=nav, modules=modules)
+        with open(course_out / 'index.html', 'w', encoding='utf-8') as fh:
+            fh.write(rendered)
+    except Exception as e:
+        print(f"Warning: failed to render rich index for {course_out}: {e}")
 
     # Copy the viewer's CSS into the course output so the static site can use
     # the same styling as the interactive viewer. We place it in a _static
@@ -119,11 +201,13 @@ def build_course(export_path: Path, out_path: Path):
                         root = doc.getroot()
                         head = lh.Element('head')
                         root.insert(0, head)
-
-                    # Prefer relative path from the HTML file to _static (use './_static/...')
+                    # Compute a relative path from the HTML file to the course _static directory
+                    # so nested pages correctly resolve the CSS file.
+                    relpath = os.path.relpath(static_dst, start=html_file.parent)
+                    css_href = os.path.join(relpath, 'canvas_viewer.css').replace(os.path.sep, '/')
                     existing = head.xpath("link[contains(@href, 'canvas_viewer.css')]")
                     if not existing:
-                        link = lh.Element('link', rel='stylesheet', href='./_static/canvas_viewer.css')
+                        link = lh.Element('link', rel='stylesheet', href=css_href)
                         if len(head):
                             head.insert(0, link)
                         else:
