@@ -311,7 +311,7 @@ def create_app(export_path):
             'wiki_content/homepage.html',
             'wiki_content/home.html',
             'wiki_content/welcome.html',
-            'wiki_content/welcome-to-orf-245-fall-2020.html',
+            'wiki_content/index.html',
         ]
         for c in candidates:
             res = export.href_to_resource(c)

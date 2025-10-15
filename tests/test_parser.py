@@ -3,11 +3,25 @@ from canvas_viewer.parser import CanvasExport
 
 
 def test_load_example():
-    base = os.path.join(os.path.dirname(__file__), '..', 'courses', 'orf245-egr245-f2020-fundamentals-of-statistics-export')
-    base = os.path.abspath(base)
+    import os
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'courses'))
+    # prefer a non-minimal export when available
+    base = None
+    for name in os.listdir(root):
+        if name == 'minimal-course-export':
+            continue
+        p = os.path.join(root, name)
+        if os.path.isdir(p) and os.path.exists(os.path.join(p, 'imsmanifest.xml')):
+            base = p
+            break
+    if not base:
+        # fallback to minimal example
+        candidate = os.path.join(root, 'minimal-course-export')
+        if os.path.isdir(candidate):
+            base = candidate
     import pytest
-    if not os.path.exists(os.path.join(base, 'imsmanifest.xml')):
-        pytest.skip('orf245 export not present; skipping parser test that requires full example export')
+    if not base or not os.path.exists(os.path.join(base, 'imsmanifest.xml')):
+        pytest.skip('No usable course export found under courses/; skipping parser test')
     exp = CanvasExport(base)
     assert exp.title is not None
     assert isinstance(exp.resources, dict)
