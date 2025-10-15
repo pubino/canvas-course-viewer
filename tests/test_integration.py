@@ -19,6 +19,10 @@ def test_wiki_page_and_files():
     import os
     from canvas_viewer.app import create_app
     base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'courses', 'orf245-egr245-f2020-fundamentals-of-statistics-export'))
+    manifest = os.path.join(base, 'imsmanifest.xml')
+    import pytest
+    if not os.path.exists(manifest):
+        pytest.skip('orf245 export not present; skipping test that requires full example export')
     app = create_app(base)
     client = app.test_client()
     # wiki page that contains an uploaded media image
@@ -37,6 +41,10 @@ def test_orf455_example_pages():
     from canvas_viewer.app import create_app
 
     base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'courses', 'orf455-ene455-f2020-energy-and-commodities-markets-export'))
+    manifest = os.path.join(base, 'imsmanifest.xml')
+    import pytest
+    if not os.path.exists(manifest):
+        pytest.skip('orf455 export not present; skipping test that requires full example export')
     app = create_app(base)
     client = app.test_client()
 
