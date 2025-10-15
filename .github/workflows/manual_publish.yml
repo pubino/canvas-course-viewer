@@ -1,0 +1,44 @@
+name: Manual Publish Courses
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish-message:
+        description: 'Commit message for published site'
+        required: false
+        default: 'Publish courses site'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install requirements
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Build courses site
+        run: |
+          python scripts/export_courses.py --courses-dir courses --output-dir public
+
+      - name: Clean caches (no-op placeholder)
+        run: |
+          echo "Cleaning caches..." || true
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          commit_message: ${{ github.event.inputs.publish-message }}

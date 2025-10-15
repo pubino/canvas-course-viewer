@@ -16,7 +16,7 @@ pip install -r requirements.txt
 2. Serve an extracted export folder:
 
 ```bash
-python serve.py --export examples/orf245-egr245-f2020-fundamentals-of-statistics-export
+python serve.py --export courses/orf245-egr245-f2020-fundamentals-of-statistics-export
 ```
 
 Open http://127.0.0.1:5000 in your browser.
@@ -29,7 +29,7 @@ Notes:
 To avoid accidentally committing large or sensitive Canvas export folders, this repository uses a strict `.gitignore` policy:
 
 - By default the repository ignores all files. The only allowed files/folders under `examples/` are:
-	- `examples/minimal-course-export/` — a small, committed example used in CI and tests.
+	- `courses/minimal-course-export/` — a small, committed example used in CI and tests.
 
 - Source code (`canvas_viewer/`), tests (`tests/`), CI workflows (`.github/workflows/`), and supporting files like `requirements.txt`, `README.md`, and `serve.py` are explicitly kept tracked.
 
@@ -56,7 +56,7 @@ App behavior and important notes
 
 Contributing and tests
 ----------------------
-- A tiny, committed example (`examples/minimal-course-export`) is provided so CI can run without large exports.
+ - A tiny, committed example (`courses/minimal-course-export`) is provided so CI can run without large exports.
 - Run tests locally with:
 
 ```bash
@@ -64,4 +64,27 @@ source .venv/bin/activate
 PYTHONPATH=. pytest -q
 ```
 
-If you add new examples for debugging, prefer to keep them out of the repository or add them to `.git/info/exclude` locally so they won't be committed.
+If you add new course exports for debugging, prefer to keep them out of the repository or add them to `.git/info/exclude` locally so they won't be committed.
+
+Manual CI workflow (GitHub Actions)
+----------------------------------
+
+This repository includes a manually-triggered workflow that builds a tiny static site from the course exports and publishes it to the `gh-pages` branch. The workflow is available under `.github/workflows/manual_publish.yml` and is triggered via the Actions UI (Workflow -> Manual Publish Courses -> Run workflow).
+
+What the workflow does (high level):
+
+- Checks out the repository and sets up Python.
+- Unzips any `.zip` or `.imscc` archives found in the `courses/` directory into sibling folders.
+- For each directory that contains an `imsmanifest.xml`, the workflow runs `scripts/export_courses.py` which copies `wiki_content/`, `web_resources/`, and `course_settings/` into a per-course folder inside the generated `public/` directory and writes a minimal `index.html` page for each course.
+- After building, the `public/` directory is published to the `gh-pages` branch via the `peaceiris/actions-gh-pages` action.
+
+Why this is manual: untrusted uploaded course exports may contain arbitrary files. Requiring a human to trigger the job (via workflow_dispatch) reduces accidental publishing and gives maintainers a chance to review changes before the site is published.
+
+How to run locally (same as CI):
+
+```bash
+python scripts/export_courses.py --courses-dir courses --output-dir public
+# then serve `public/` with any static server (or open the generated files locally)
+```
+
+If you'd like me to customize the workflow (add filtering, preflight checks, or a PR-based preview deploy), tell me which behavior you prefer and I will implement it.
