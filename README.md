@@ -13,10 +13,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Serve an extracted export folder:
+2. Serve an extracted export folder locally:
 
 ```bash
-python serve.py --export courses/orf245-egr245-f2020-fundamentals-of-statistics-export
+python serve.py --src courses/orf245-egr245-f2020-fundamentals-of-statistics-export
 ```
 
 Open http://127.0.0.1:5000 in your browser.
@@ -86,5 +86,37 @@ How to run locally (same as CI):
 python scripts/export_courses.py --courses-dir courses --output-dir public
 # then serve `public/` with any static server (or open the generated files locally)
 ```
+
+Using this repository with your own course exports
+-------------------------------------------------
+
+If you'd like to publish your own course exports using this project, follow these steps:
+
+1. Fork this repository to your GitHub account.
+2. Enable GitHub Pages for the repository: Settings -> Pages -> Branch -> gh-pages (the workflow will push to this branch).
+3. Add your exported course files into the `courses/` directory. You can add either:
+	 - an extracted course folder (containing `imsmanifest.xml`, `wiki_content/`, `web_resources/`, etc.), or
+	 - a `.zip` or `.imscc` archive; the workflow will unzip archives into sibling folders before building.
+4. Commit your changes to your fork (do not push large private exports to public forks unless you intend to publish them).
+5. In the repository Actions tab, run the "Manual Publish Courses" workflow (or wait for your configured trigger). The workflow will build the site and publish `public/` to `gh-pages`.
+
+Optional: automatic publishing on changes to `courses/`
+----------------------------------------------------
+
+If you prefer to publish automatically when files in `courses/` change, edit `.github/workflows/manual_publish.yml` and replace the `on:` block with something that watches the `courses/` path, for example:
+
+```yaml
+on:
+	push:
+		paths:
+			- 'courses/**'
+```
+
+This will trigger the workflow on pushes that modify `courses/`. Be cautious: publishing unreviewed uploads automatically can expose private content.
+
+Security note
+-------------
+
+Course exports may contain arbitrary files. For public repositories, ensure you do not commit private student data or sensitive materials. The workflow is manual by default to reduce accidental publishing; keep it manual unless you control the uploaded content.
 
 If you'd like me to customize the workflow (add filtering, preflight checks, or a PR-based preview deploy), tell me which behavior you prefer and I will implement it.
