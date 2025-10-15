@@ -30,7 +30,7 @@ server2.out
 
 # Keep examples/ (don't ignore) — developers may add local exports but avoid committing large ones
 # Ignore everything under examples/ except minimal-course-export
-examples/**
-!examples/minimal-course-export/
-!examples/minimal-course-export/**
+courses/**
+!courses/minimal-course-export/
+!courses/minimal-course-export/**
 

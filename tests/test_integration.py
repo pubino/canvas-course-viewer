@@ -5,7 +5,7 @@ def test_index_renders():
     """Start the Flask app via the factory and GET / using the test client."""
     from canvas_viewer.app import create_app
 
-    base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'examples', 'minimal-course-export'))
+    base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'courses', 'minimal-course-export'))
 
     app = create_app(base)
     client = app.test_client()
@@ -18,7 +18,7 @@ def test_index_renders():
 def test_wiki_page_and_files():
     import os
     from canvas_viewer.app import create_app
-    base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'examples', 'orf245-egr245-f2020-fundamentals-of-statistics-export'))
+    base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'courses', 'orf245-egr245-f2020-fundamentals-of-statistics-export'))
     app = create_app(base)
     client = app.test_client()
     # wiki page that contains an uploaded media image
@@ -36,7 +36,7 @@ def test_orf455_example_pages():
     import os
     from canvas_viewer.app import create_app
 
-    base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'examples', 'orf455-ene455-f2020-energy-and-commodities-markets-export'))
+    base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'courses', 'orf455-ene455-f2020-energy-and-commodities-markets-export'))
     app = create_app(base)
     client = app.test_client()
 

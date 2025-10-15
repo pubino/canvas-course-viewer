@@ -5,7 +5,7 @@ from canvas_viewer.app import create_app
 
 
 def _example_base():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'examples', 'minimal-course-export'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'courses', 'minimal-course-export'))
 
 
 def test_find_external_links_exact_and_wildcard(tmp_path):

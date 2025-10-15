@@ -5,8 +5,8 @@ from canvas_viewer.parser import CanvasExport
 from canvas_viewer.app import create_app
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-EX1 = os.path.join(HERE, '..', 'examples', 'orf245-egr245-f2020-fundamentals-of-statistics-export')
-EX2 = os.path.join(HERE, '..', 'examples', 'orf455-ene455-f2020-energy-and-commodities-markets-export')
+EX1 = os.path.join(HERE, '..', 'courses', 'orf245-egr245-f2020-fundamentals-of-statistics-export')
+EX2 = os.path.join(HERE, '..', 'courses', 'orf455-ene455-f2020-energy-and-commodities-markets-export')
 
 
 def test_get_modules_non_empty():
