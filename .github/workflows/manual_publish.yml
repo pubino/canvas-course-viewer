@@ -32,6 +32,29 @@ jobs:
         run: |
           python scripts/export_courses.py --courses-dir courses --output-dir public
 
+      - name: Ensure gh-pages branch exists
+        run: |
+          # Configure a committer for automated branch creation
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # If gh-pages already exists on origin, do nothing
+          if git ls-remote --heads origin gh-pages | grep -q gh-pages; then
+            echo "gh-pages branch already exists; skipping creation"
+          else
+            echo "gh-pages not found; creating a placeholder branch"
+            git fetch origin
+            # create a temporary orphan branch and push it as gh-pages
+            git checkout --orphan temp-gh-pages
+            git rm -rf . || true
+            echo "<!doctype html><meta charset=utf-8><title>gh-pages placeholder</title><p>gh-pages branch created by workflow</p>" > index.html
+            git add index.html
+            git commit -m "Create gh-pages placeholder branch"
+            git push origin temp-gh-pages:gh-pages
+            # return to main and delete local temp branch
+            git checkout -f main
+            git branch -D temp-gh-pages || true
+          fi
+
       - name: Clean caches (no-op placeholder)
         run: |
           echo "Cleaning caches..." || true
