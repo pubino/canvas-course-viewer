@@ -30,12 +30,12 @@ Using this repository with your own course exports
 If you'd like to publish your own course exports using this project, follow these steps:
 
 1. Fork this repository to your GitHub account.
-2. Enable GitHub Pages for the repository: Settings -> Pages -> Branch -> gh-pages (the workflow will push to this branch).
-3. Add your exported course files into the `courses/` directory. You can add either:
+2. Add your exported course files into the `courses/` directory of your fork. You can add either:
 	 - an extracted course folder (containing `imsmanifest.xml`, `wiki_content/`, `web_resources/`, etc.), or
 	 - a `.zip` or `.imscc` archive; the workflow will unzip archives into sibling folders before building.
-4. Commit your changes to your fork (do not push large private exports to public forks unless you intend to publish them).
-5. In the repository Actions tab, run the "Manual Publish Courses" workflow (or wait for your configured trigger). The workflow will build the site and publish `public/` to `gh-pages`.
+3. Commit and push your changes to your fork (do not push large private exports to public forks unless you intend to publish them).
+4. In the repository Actions tab, run the "Manual Publish Courses" workflow (or wait for your configured trigger). The workflow will build the site and publish `public/` to `gh-pages` — the workflow will create `gh-pages` if it doesn't already exist.
+5. After the workflow finishes, enable GitHub Pages for your fork: Settings -> Pages -> Branch -> `gh-pages` (select the published `gh-pages` branch).
 
 This section has been promoted for visibility — keep course exports out of public forks unless you intend to publish them.
 
