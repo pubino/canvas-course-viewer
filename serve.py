@@ -8,15 +8,15 @@ import socket
 
 
 @click.command()
-@click.option('--export', 'export_path', required=True, help='Path to extracted Canvas export folder')
-@click.option('--export-out', 'export_out', default=None, help='If provided, write a static export of the course to this directory and exit')
+@click.option('--src', 'src_path', required=True, help='Path to extracted Canvas export folder')
+@click.option('--export', 'export_out', default=None, help='If provided, write a static export of the course to this directory and exit')
 @click.option('--host', default='127.0.0.1')
 @click.option('--port', default=5001)
 @click.option('--canvas-base-domain', 'canvas_base_domain', default=None, help='Comma-separated base domain(s) to treat as internal (overrides CANVAS_BASE_DOMAIN env var)')
-def serve(export_path, export_out, host, port, canvas_base_domain):
-    export_path = os.path.abspath(export_path)
-    if not os.path.exists(export_path):
-        raise click.ClickException(f'Export path not found: {export_path}')
+def serve(src_path, export_out, host, port, canvas_base_domain):
+    src_path = os.path.abspath(src_path)
+    if not os.path.exists(src_path):
+        raise click.ClickException(f'Source path not found: {src_path}')
 
     # If user requested a static export, write files and exit
     if export_out:
@@ -25,7 +25,7 @@ def serve(export_path, export_out, host, port, canvas_base_domain):
 
         # copy key folders if present
         for sub in ('wiki_content', 'web_resources', 'course_settings'):
-            src = Path(export_path) / sub
+            src = Path(src_path) / sub
             if src.exists():
                 dst = out_dir / sub
                 if dst.exists():
@@ -34,11 +34,11 @@ def serve(export_path, export_out, host, port, canvas_base_domain):
 
         # build a minimal index.html matching the app's summaries
         try:
-            exp = CanvasExport(export_path)
+            exp = CanvasExport(src_path)
         except Exception as e:
             raise click.ClickException(f'Failed to parse export for static write: {e}')
 
-        name = exp.title or Path(export_path).name
+        name = exp.title or Path(src_path).name
         pages = exp.list_pages()
         files = exp.get_files()
         modules = exp.get_modules()
@@ -105,8 +105,8 @@ def serve(export_path, export_out, host, port, canvas_base_domain):
     if canvas_base_domain:
         os.environ['CANVAS_BASE_DOMAIN'] = canvas_base_domain
 
-    app = create_app(export_path)
-    click.echo(f'Serving {export_path} at http://{host}:{chosen}')
+    app = create_app(src_path)
+    click.echo(f'Serving {src_path} at http://{host}:{chosen}')
     app.run(host=host, port=chosen)
 
 
