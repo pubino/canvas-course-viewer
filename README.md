@@ -1,9 +1,24 @@
-Canvas Course Viewer
-=====================
+# Canvas Course Viewer
 
-A small Python app that reconstructs and serves a local web view of an exported Canvas course (Common Cartridge / IMS export).
+A small Python app that serves a web view of an exported Canvas course.
 
-Usage (from project root):
+This implementation parses `imsmanifest.xml` and serves files referenced in `wiki_content/`, `web_resources/`, and any other files listed in the manifest.
+
+It uses a very simple parser and may not represent the full extent of the exported data.  If in doubt, upload and import to a Canvas instance.
+
+## Publish Course Exports
+
+If you'd like to publish your own course exports:
+
+1. Fork this Github repository.
+2. Add your exported course files (`.imscc`, `.zip`) or the extracted course folders into the `courses/` directory of your fork. 
+3. Commit and push your changes. 
+4. Run the "Manual Publish Courses" workflow and wait for it to complete.
+5. Enable GitHub Pages for the forked repository under Settings -> Pages.  Have the pages deployed from the `gh-pages` branch.
+
+Keep course exports out of public forks unless you intend to and have permission to publish them.
+
+## View Locally 
 
 1. Create a virtual environment and install dependencies
 
@@ -19,35 +34,16 @@ pip install -r requirements.txt
 python serve.py --src courses/minimal-course-export
 ```
 
-Open the URL printed by the server after starting `serve.py` (for example, http://127.0.0.1:<port>). The app selects an available port and intentionally avoids binding to port 5000 on macOS to prevent conflicts.
+3. Open the URL printed by the server to navigate the course content.
 
-Notes:
-- This is an initial implementation that parses `imsmanifest.xml` and serves files referenced in `wiki_content/`, `web_resources/`, and files listed in the manifest. It uses Flask and a simple parser.
 
-Using this repository with your own course exports
--------------------------------------------------
+## Notes
 
-If you'd like to publish your own course exports using this project, follow these steps:
+- The app serves HTML pages and files that are part of the IMS/Canvas export (e.g., `wiki_content/`, `web_resources/`, and `course_settings` files). The app rewrites links in exported HTML so they route through the local viewer and uses a canonical `/file/<id>` endpoint to serve files referenced by resource identifier.
+- The "Canvas Data" page displays additional course metadata.
+- Exports do not include content hosted by external LTI/External Tools (Panopto, Gradescope, Zoom cloud recordings, etc.) as they are generally NOT bundled with the Canvas export.  The app attempts to detect the use of third-party tools and shows a warning when such integrations are likely present.
 
-1. Fork this repository to your GitHub account.
-2. Add your exported course files into the `courses/` directory of your fork. You can add either:
-	 - an extracted course folder (containing `imsmanifest.xml`, `wiki_content/`, `web_resources/`, etc.), or
-	 - a `.zip` or `.imscc` archive; the workflow will unzip archives into sibling folders before building.
-3. Commit and push your changes to your fork (do not push large private exports to public forks unless you intend to publish them).
-4. In the repository Actions tab, run the "Manual Publish Courses" workflow (or wait for your configured trigger). The workflow will build the site and publish `public/` to `gh-pages` — the workflow will create `gh-pages` if it doesn't already exist.
-5. After the workflow finishes, enable GitHub Pages for your fork: Settings -> Pages -> Branch -> `gh-pages` (select the published `gh-pages` branch).
 
-This section has been promoted for visibility — keep course exports out of public forks unless you intend to publish them.
-
-App behavior and important notes
---------------------------------
-- What is included in an export view:
-	- HTML pages and files that are part of the IMS/Canvas export (e.g., `wiki_content/`, `web_resources/`, and `course_settings` files). The app rewrites links in exported HTML so they route through the local viewer.
-	- A canonical `/file/<id>` endpoint to serve files referenced by resource identifier.
-	- A curated "Canvas Data" page which surfaces `course_settings/course_settings.xml` metadata in a human-friendly way.
-
-- What is NOT included (important):
-	- Content hosted by external LTI/External Tools (Panopto, Gradescope, Zoom cloud recordings, etc.) is generally NOT bundled with the Canvas export — only links/launch metadata are present. The app includes heuristics to detect these and will show a warning when such integrations are likely present, but it does not retrieve external provider data.
 
 - Static resolution heuristics:
 	- The app tries several locations when resolving `/static/<path>` requests: package static, project static, the export folder (with placeholder variants), mapping into `web_resources/`, and finally a recursive basename search in `web_resources`.
@@ -58,9 +54,9 @@ App behavior and important notes
 	- Date/time formatting and metadata extraction are best-effort from `course_settings`. Some fields may be missing depending on the Canvas version and export options.
 	- The plugin/LTI detection is heuristic-based. It can produce false positives or miss uncommon integrations. If you rely on this for audits, verify the results manually.
 
-Contributing and tests
-----------------------
- - A tiny, committed example (`courses/minimal-course-export`) is provided so CI can run without large exports.
+## Tests
+
+- A tiny, example (`courses/minimal-course-export`) is provided so CI can run with some baseline data.
 - Run tests locally with:
 
 ```bash

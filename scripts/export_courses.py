@@ -63,10 +63,12 @@ def build_course(export_path: Path, out_path: Path):
     files = exp.get_files()
     modules = exp.get_modules()
 
+    # gather metadata for use in templates and return value
+    metadata = exp.get_course_metadata() or {}
+
     # Render a richer static index using a small Jinja2 template that mimics
     # the interactive viewer but uses local paths for static assets and pages.
     try:
-        metadata = exp.get_course_metadata() or {}
         assets = []
         # combine pages and files for a simplified asset listing
         for p in exp.list_pages():
@@ -220,6 +222,84 @@ def build_course(export_path: Path, out_path: Path):
     except Exception as e:
         print(f"Warning: failed to copy/inject viewer static assets: {e}")
 
+    # Generate static section pages: pages.html (wiki pages), files.html, modules.html
+    try:
+        # pages.html
+        pages_list = exp.get_pages_by_folder('wiki_content')
+        pages_tmpl = jinja2.Template(r"""<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ title }} - Pages</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="{{ css_href }}" />
+    </head>
+    <body>
+        <main class="container mt-3">
+            <h1>Pages</h1>
+            <ul>
+            {% for p in pages %}
+                <li><a href="./{{ p.href }}">{{ p.title or p.href }}</a></li>
+            {% endfor %}
+            </ul>
+            <p><a href="./index.html">Back to course</a></p>
+        </main>
+    </body>
+</html>""")
+        # compute css href relative to course root (index is in course root)
+        css_href_root = './_static/canvas_viewer.css'
+        with open(course_out / 'pages.html', 'w', encoding='utf-8') as fh:
+            fh.write(pages_tmpl.render(title=name, pages=pages_list, css_href=css_href_root))
+
+        # files.html
+        files_list = exp.get_files()
+        files_tmpl = jinja2.Template(r"""<!doctype html>
+<html><head>
+<meta charset="utf-8"><title>{{ title }} - Files</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ css_href }}" />
+</head><body>
+<main class="container mt-3">
+<h1>Files</h1>
+<ul>
+{% for f in files %}
+    <li><a href="./{{ f.href }}">{{ f.title }}</a> {% if f.date %}({{ f.date }}){% endif %}</li>
+{% endfor %}
+</ul>
+<p><a href="./index.html">Back to course</a></p>
+</main></body></html>""")
+        with open(course_out / 'files.html', 'w', encoding='utf-8') as fh:
+            fh.write(files_tmpl.render(title=name, files=files_list, css_href=css_href_root))
+
+        # modules.html
+        modules_list = exp.get_modules()
+        modules_tmpl = jinja2.Template(r"""<!doctype html>
+<html><head>
+<meta charset="utf-8"><title>{{ title }} - Modules</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ css_href }}" />
+</head><body>
+<main class="container mt-3">
+<h1>Modules</h1>
+{% for m in modules %}
+    <h2>{{ m.title }}</h2>
+    <ul>
+    {% for it in m.items %}
+        <li><a href="./{{ it.href }}">{{ it.title }}</a></li>
+    {% endfor %}
+    </ul>
+{% endfor %}
+<p><a href="./index.html">Back to course</a></p>
+</main></body></html>""")
+        with open(course_out / 'modules.html', 'w', encoding='utf-8') as fh:
+            fh.write(modules_tmpl.render(title=name, modules=modules_list, css_href=css_href_root))
+    except Exception as e:
+        print(f"Warning: failed to render static section pages for {course_out}: {e}")
+
+    # Return course metadata for use by build_site when rendering root index
+    return {'name': export_path.name, 'title': name, 'metadata': metadata}
+
 
 def build_site(courses_dir: Path, out_dir: Path):
     # ensure out_dir is clean
@@ -230,21 +310,48 @@ def build_site(courses_dir: Path, out_dir: Path):
     # first unzip any archives
     unzip_archives(courses_dir)
 
-    course_names = []
+    course_meta = []
     for p in sorted(courses_dir.iterdir()):
         if p.is_dir() and (p / 'imsmanifest.xml').exists():
-            build_course(p, out_dir)
-            course_names.append((p.name, p))
+            cm = build_course(p, out_dir)
+            if cm:
+                course_meta.append(cm)
 
     # write root index.html
-    lines = ['<!doctype html>', '<html><head><meta charset="utf-8"><title>Courses</title></head><body>', '<h1>Courses</h1>', '<ul>']
-    for name, p in course_names:
-        lines.append(f'<li><a href="./{name}/index.html">{name}</a></li>')
-    lines.append('</ul>')
-    lines.append('</body></html>')
+        # Render a styled root index.html that lists courses
+        try:
+                root_tmpl = jinja2.Template(r"""<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Courses</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="./_static/canvas_viewer.css" />
+    </head>
+    <body>
+        <main class="container mt-3">
+            <h1>Courses</h1>
+            <div class="list-group">
+                {% for c in courses %}
+                    <a class="list-group-item list-group-item-action" href="./{{ c.name }}/index.html">{{ c.title or c.name }}</a>
+                {% endfor %}
+            </div>
+        </main>
+    </body>
+</html>""")
+                # ensure top-level _static exists and contains viewer assets
+                static_src_dir = Path(__file__).resolve().parents[1] / 'canvas_viewer' / 'static'
+                if static_src_dir.exists() and static_src_dir.is_dir():
+                        top_static = out_dir / '_static'
+                        if top_static.exists():
+                                shutil.rmtree(top_static)
+                        shutil.copytree(static_src_dir, top_static)
 
-    with open(out_dir / 'index.html', 'w', encoding='utf-8') as fh:
-        fh.write('\n'.join(lines))
+                with open(out_dir / 'index.html', 'w', encoding='utf-8') as fh:
+                        fh.write(root_tmpl.render(courses=course_meta))
+        except Exception as e:
+                print(f"Warning: failed to render root index: {e}")
 
 
 def main():
