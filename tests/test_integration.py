@@ -45,10 +45,17 @@ def test_wiki_page_and_files():
         pytest.skip('No course exports available under courses/; skipping integration test')
     app = create_app(base)
     client = app.test_client()
-    # wiki page that contains an uploaded media image
-    r = client.get('/page/wiki_content/welcome-to-orf-245-fall-2020.html')
-    assert r.status_code == 200
-    assert b'Canvas Viewer' in r.data  # navbar present via layout
+    # wiki page: request the first wiki_content page the export knows about
+    from canvas_viewer.parser import CanvasExport
+    exp = CanvasExport(base)
+    pages = exp.get_pages_by_folder('wiki_content')
+    if pages:
+        r = client.get('/page/' + pages[0].get('href'))
+        assert r.status_code == 200
+        assert b'Canvas Viewer' in r.data  # navbar present via layout
+    else:
+        import pytest
+        pytest.skip('No wiki_content pages found in selected export; skipping page assertions')
 
     r2 = client.get('/files')
     assert r2.status_code == 200
