@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<course_settings>
+  <title>Minimal Course</title>
+  <course_code>MIN101</course_code>
+  <start_at>2025-01-01T00:00:00Z</start_at>
+  <conclude_at>2025-12-31T23:59:59Z</conclude_at>
+  <is_public>false</is_public>
+  <tab_configuration>[{"label":"Home","url":"/home"}, {"label":"External","url":"https://external.example.com/launch"}]
+  <additional_info>See https://external.example.com/ for more details</additional_info>
+</course_settings>

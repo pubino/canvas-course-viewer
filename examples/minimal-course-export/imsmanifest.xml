@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://www.imsglobal.org/xsd/imsccv1p1/imscp_v1p1" identifier="minimal-course" version="1">
+  <organizations default="org1">
+    <organization identifier="org1">
+      <title>Minimal Course</title>
+      <item identifier="item1" identifierref="res-wiki-home">
+        <title>Home</title>
+      </item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="res-wiki-home" type="webcontent" href="wiki_content/homepage.html">
+      <file href="wiki_content/homepage.html" />
+    </resource>
+    <resource identifier="res-web-file" type="webcontent" href="web_resources/sample.txt">
+      <file href="web_resources/sample.txt" />
+    </resource>
+    <resource identifier="res-external-launch" type="webcontent" href="https://external.example.com/launch">
+      <file href="https://external.example.com/launch" />
+    </resource>
+  </resources>
+</manifest>

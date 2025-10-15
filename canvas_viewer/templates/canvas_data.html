@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/canvas_viewer.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Canvas Viewer</a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            {% if nav.home %}<li class="nav-item"><a class="nav-link" href="/home">Home</a></li>{% endif %}
+            {% if nav.syllabus %}<li class="nav-item"><a class="nav-link" href="/syllabus">Syllabus</a></li>{% endif %}
+            {% if nav.announcements %}<li class="nav-item"><a class="nav-link" href="/announcements">Announcements</a></li>{% endif %}
+            {% if nav.modules %}<li class="nav-item"><a class="nav-link" href="/modules">Modules</a></li>{% endif %}
+            {% if nav.pages %}<li class="nav-item"><a class="nav-link" href="/pages">Pages</a></li>{% endif %}
+            {% if nav.files %}<li class="nav-item"><a class="nav-link" href="/files">Files</a></li>{% endif %}
+            {% if nav.people %}<li class="nav-item"><a class="nav-link" href="/people">People</a></li>{% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container">
+      <div class="py-3">
+        <h1 class="h3">Canvas Data</h1>
+        {% if has_external_tools %}
+          <div class="alert alert-warning">
+            <strong>Warning:</strong> This export references external tool integrations that may host content outside the export. Not all content may be present. Detected: {{ external_tools | join(', ') }}
+          </div>
+        {% endif %}
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header">Summary</div>
+              <div class="card-body">
+                <p><strong>Title:</strong> {{ metadata.title or '—' }}</p>
+                <p><strong>Course code:</strong> {{ metadata.course_code or '—' }}</p>
+                <p><strong>Start:</strong> {{ metadata.start_at or '—' }} <strong>End:</strong> {{ metadata.conclude_at or '—' }}</p>
+                <p><strong>Visibility:</strong> {{ 'public' if metadata.is_public == 'true' else 'private' }}</p>
+                <p><strong>Storage quota:</strong> {{ metadata.storage_quota or '—' }}</p>
+                <p><strong>Grading standard id:</strong> {{ metadata.grading_standard_id or '—' }}</p>
+              </div>
+            </div>
+
+            <div class="card mb-3">
+              <div class="card-header">Counts</div>
+              <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                  <li>Pages: {{ counts.pages }}</li>
+                  <li>Files: {{ counts.files }}</li>
+                  <li>Modules: {{ counts.modules }}</li>
+                  <li>Quizzes: {{ counts.quizzes }}</li>
+                  <li>Discussions: {{ counts.discussions }}</li>
+                  <li>Announcements: {{ counts.announcements }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Advanced metadata</span>
+                <a class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" href="#advancedMeta" role="button" aria-expanded="false" aria-controls="advancedMeta">Show advanced</a>
+              </div>
+              <div class="collapse" id="advancedMeta">
+                <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-sm metadata-table">
+                    <tbody>
+                      <tr><th style="width:40%">Title</th><td class="text-break">{{ human.title }}</td></tr>
+                      <tr><th>Course code</th><td class="text-break">{{ human.course_code }}</td></tr>
+                      <tr><th>Start</th><td class="text-break">{{ human.start_at }}</td></tr>
+                      <tr><th>End</th><td class="text-break">{{ human.conclude_at }}</td></tr>
+                      <tr><th>Public</th><td class="text-break">{{ human.is_public }}</td></tr>
+                      <tr><th>Public syllabus</th><td class="text-break">{{ human.public_syllabus }}</td></tr>
+                      <tr><th>Storage</th><td class="text-break">{{ human.storage_quota }}</td></tr>
+                      <tr><th>Grading standard</th><td class="text-break">{{ human.grading_standard_id }}</td></tr>
+                      <tr>
+                        <th>Tab configuration</th>
+                        <td>
+                          <div class="tab-config-pre">{{ human.tab_configuration }}</div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <p>
+                  <a class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" href="#rawMeta" role="button" aria-expanded="false" aria-controls="rawMeta">Show raw metadata</a>
+                </p>
+                <div class="collapse" id="rawMeta">
+                  <div class="card card-body">
+                    <pre class="raw-json">{{ metadata | tojson(indent=2) }}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header">External Links</div>
+              <div class="card-body">
+                {% if external_links %}
+                  <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                      <thead><tr><th>URL</th><th>Source</th><th>Context</th></tr></thead>
+                      <tbody>
+                        {% for l in external_links %}
+                          <tr>
+                            <td><a href="{{ l.href }}" target="_blank" rel="noopener noreferrer">{{ l.href }}</a></td>
+                            <td>{{ l.source }}</td>
+                            <td>{{ l.context }}</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <p class="mb-0">No external links detected outside <code>{{ base_domain }}</code>.</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

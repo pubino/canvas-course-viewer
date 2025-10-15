@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# pytest cache
+.pytest_cache/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+
+# Logs
+server.out
+server2.out
+
+# OS files
+.DS_Store
+
+# Keep examples/ (don't ignore) — developers may add local exports but avoid committing large ones
+# Ignore everything under examples/ except minimal-course-export
+examples/**
+!examples/minimal-course-export/
+!examples/minimal-course-export/**
+
