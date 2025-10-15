@@ -1,0 +1,21 @@
+.metadata-table th { vertical-align: top; }
+.metadata-table td { word-break: break-word; }
+.tab-config-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 240px;
+  overflow: auto;
+  background: #f8f9fa;
+  padding: .5rem;
+  border-radius: .25rem;
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: .875rem;
+}
+.raw-json {
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: .8rem;
+  max-height: 480px;
+  overflow: auto;
+}
