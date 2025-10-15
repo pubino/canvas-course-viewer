@@ -16,24 +16,28 @@ pip install -r requirements.txt
 2. Serve an extracted export folder locally:
 
 ```bash
-python serve.py --src courses/orf245-egr245-f2020-fundamentals-of-statistics-export
+python serve.py --src courses/minimal-course-export
 ```
 
-Open http://127.0.0.1:5000 in your browser.
+Open the URL printed by the server after starting `serve.py` (for example, http://127.0.0.1:<port>). The app selects an available port and intentionally avoids binding to port 5000 on macOS to prevent conflicts.
 
 Notes:
 - This is an initial implementation that parses `imsmanifest.xml` and serves files referenced in `wiki_content/`, `web_resources/`, and files listed in the manifest. It uses Flask and a simple parser.
 
-.gitignore policy
-------------------
-To avoid accidentally committing large or sensitive Canvas export folders, this repository uses a strict `.gitignore` policy:
+Using this repository with your own course exports
+-------------------------------------------------
 
-- By default the repository ignores all files. The only allowed files/folders under `examples/` are:
-	- `courses/minimal-course-export/` — a small, committed example used in CI and tests.
+If you'd like to publish your own course exports using this project, follow these steps:
 
-- Source code (`canvas_viewer/`), tests (`tests/`), CI workflows (`.github/workflows/`), and supporting files like `requirements.txt`, `README.md`, and `serve.py` are explicitly kept tracked.
+1. Fork this repository to your GitHub account.
+2. Enable GitHub Pages for the repository: Settings -> Pages -> Branch -> gh-pages (the workflow will push to this branch).
+3. Add your exported course files into the `courses/` directory. You can add either:
+	 - an extracted course folder (containing `imsmanifest.xml`, `wiki_content/`, `web_resources/`, etc.), or
+	 - a `.zip` or `.imscc` archive; the workflow will unzip archives into sibling folders before building.
+4. Commit your changes to your fork (do not push large private exports to public forks unless you intend to publish them).
+5. In the repository Actions tab, run the "Manual Publish Courses" workflow (or wait for your configured trigger). The workflow will build the site and publish `public/` to `gh-pages`.
 
-If you need to add a larger export folder for local development, add it to your personal git-stash or work on an untracked local branch, or modify `.gitignore` temporarily — but avoid committing large exports into the repository.
+This section has been promoted for visibility — keep course exports out of public forks unless you intend to publish them.
 
 App behavior and important notes
 --------------------------------
@@ -87,18 +91,6 @@ python scripts/export_courses.py --courses-dir courses --output-dir public
 # then serve `public/` with any static server (or open the generated files locally)
 ```
 
-Using this repository with your own course exports
--------------------------------------------------
-
-If you'd like to publish your own course exports using this project, follow these steps:
-
-1. Fork this repository to your GitHub account.
-2. Enable GitHub Pages for the repository: Settings -> Pages -> Branch -> gh-pages (the workflow will push to this branch).
-3. Add your exported course files into the `courses/` directory. You can add either:
-	 - an extracted course folder (containing `imsmanifest.xml`, `wiki_content/`, `web_resources/`, etc.), or
-	 - a `.zip` or `.imscc` archive; the workflow will unzip archives into sibling folders before building.
-4. Commit your changes to your fork (do not push large private exports to public forks unless you intend to publish them).
-5. In the repository Actions tab, run the "Manual Publish Courses" workflow (or wait for your configured trigger). The workflow will build the site and publish `public/` to `gh-pages`.
 
 Optional: automatic publishing on changes to `courses/`
 ----------------------------------------------------
@@ -119,4 +111,4 @@ Security note
 
 Course exports may contain arbitrary files. For public repositories, ensure you do not commit private student data or sensitive materials. The workflow is manual by default to reduce accidental publishing; keep it manual unless you control the uploaded content.
 
-If you'd like me to customize the workflow (add filtering, preflight checks, or a PR-based preview deploy), tell me which behavior you prefer and I will implement it.
+<!-- Removed: customization offer to keep README concise -->
